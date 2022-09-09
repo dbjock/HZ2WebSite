@@ -140,7 +140,7 @@ def resource_detail(id):
         x_tmp_list.append(['skip','Force number of pivot columns',x,0])
     # Load the results from the query
     for req in weapons:
-        x_tmp_list.append([req.weapon_id,req.weapon.title,req.level,req.amt_required])
+        x_tmp_list.append([req.weapon_id,f"{req.weapon.title} ({req.weapon.type.title})",req.level,req.amt_required])
 
     log.debug(f"x_tmp_list:\n {x_tmp_list}")
     # Creating panda dataframe from weapon requirements
