@@ -202,6 +202,20 @@ def resource_detail(id):
     log.info(f"Table Data: {tbl_data}")
     return render_template('resource.html', title=f"Resource - {resource.title}", resource=resource, header_row=headings, data=tbl_data)
 
-@app.route("/weapons")
-def weapons():
-    return render_template('weapons.html', title="The Resources")
+@app.route("/allweapons")
+def weapons_all():
+    # Get all the weapons in the db
+    log.info(f"Getting all weapons")
+    # Just want : Weapon,Type,Rarity with_entities(SomeModel.col1, SomeModel.col2)
+    # weapons = Weapon.query.order_by(Weapon.title).all()
+    results = db.session.query(Weapon,Weapon_type,Rarity).join(Weapon_type,Rarity).with_entities(Weapon.id, Weapon.title,Weapon_type.id,Weapon_type.title, Rarity.id, Rarity.title).order_by(Weapon.title).all()
+    log.info(f"Weapons found: {len(results)}")
+    if len(results) == 0:
+        log.critical(f"No weapons found in database")
+        return render_template('not_found.html',title='Weapons not found', thing='weapons')
+    log.debug(f"weapons: {results}")
+
+    header = ("Weapon", "Type", "Rarity")
+    data = results
+    log.info(f"Table Data: {data}")
+    return render_template('weapons.html', title=f"ALL Weapons", header_row=header, data=data)
