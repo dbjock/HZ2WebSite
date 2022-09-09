@@ -206,8 +206,6 @@ def resource_detail(id):
 def weapons_all():
     # Get all the weapons in the db
     log.info(f"Getting all weapons")
-    # Just want : Weapon,Type,Rarity with_entities(SomeModel.col1, SomeModel.col2)
-    # weapons = Weapon.query.order_by(Weapon.title).all()
     results = db.session.query(Weapon,Weapon_type,Rarity).join(Weapon_type,Rarity).with_entities(Weapon.id, Weapon.title,Weapon_type.id,Weapon_type.title, Rarity.id, Rarity.title).order_by(Weapon.title).all()
     log.info(f"Weapons found: {len(results)}")
     if len(results) == 0:
@@ -219,3 +217,21 @@ def weapons_all():
     data = results
     log.info(f"Table Data: {data}")
     return render_template('weapons.html', title=f"ALL Weapons", header_row=header, data=data)
+
+@app.route("/allresources")
+def resources_all():
+    # Get all the resources in the db
+    log.info(f"Getting all resources")
+    results = db.session.query(Resource,Resource_type,Rarity).join(Resource_type,Rarity).with_entities(Resource.id, Resource.title,Resource_type.id,Resource_type.title, Rarity.id, Rarity.title).order_by(Resource.title).all()
+    log.info(f"Resources found: {len(results)}")
+    if len(results) == 0:
+        log.critical(f"No resources found in database")
+        return render_template('not_found.html',title='Resources not found', thing='resource')
+    log.debug(f"resources: {results}")
+
+    header = ("Resource", "Type", "Rarity")
+    data = results
+    log.info(f"Table Data: {data}")
+    return render_template('resources.html', title=f"ALL Resources", header_row=header, data=data)
+
+
