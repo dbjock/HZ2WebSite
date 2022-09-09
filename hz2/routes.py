@@ -50,8 +50,8 @@ def weapon_detail(weapon_id):
     log.info(f"Building list for panda")
     x_tmp_list=[]
     # Require at least 5 columns
-    for x in range(1,6):
-        x_tmp_list.append(['skip','Force minimum number of pivot columns',x,0])
+    for x in range(0,6):
+        x_tmp_list.append(['skip','Force minimum number of pivot columns',f'Level {x}',0])
     # Load weapon requirements
     for req in w_reqs:
         x_tmp_list.append([req.resource_id,req.resource.title,req.level,req.amt_required])
@@ -96,6 +96,7 @@ def weapon_detail(weapon_id):
         elif r_numb == 1: # here is the header
             log.debug(f"{r_numb} : Header : {x}")
             headings = x
+            headings[0] = 'Resource'
             log.info(f"Table Header: {headings}")
         else: # this is data. Make it pretty
             log.debug(f"{r_numb} : MakePrtty : {x}")
@@ -136,8 +137,9 @@ def resource_detail(id):
     log.info(f"Building list for panda")
     x_tmp_list=[]
     # Required to have 5 levels/columns with data
-    for x in range(1,6):
-        x_tmp_list.append(['skip','Force number of pivot columns',x,0])
+    for x in range(0,6):
+        x_tmp_list.append(['skip','Force minimum number of pivot columns',f'Level {x}',0])
+
     # Load the results from the query
     for req in weapons:
         x_tmp_list.append([req.weapon_id,f"{req.weapon.title} ({req.weapon.type.title})",req.level,req.amt_required])
@@ -180,6 +182,7 @@ def resource_detail(id):
         elif r_numb == 1: # here is the header
             log.debug(f"{r_numb} : Header : {x}")
             headings = x
+            headings[0] = 'Weapon'
             log.info(f"Table Header: {headings}")
         else: # this is data. Make it pretty
             log.debug(f"{r_numb} : MakePrtty : {x}")
