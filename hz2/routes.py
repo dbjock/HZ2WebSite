@@ -167,8 +167,8 @@ def resource_detail(id):
 
     # Transform pivot table with totals to a list - Step 3: Remove unnessary rows from
     log.info('Transform pivot data: Step 3 - Create table header. Transform table data')
-    # last 2 rows are not needed. This is a total row, and a blank row.
-    del x_tmp_pivot_list[len(x_tmp_pivot_list)-2:len(x_tmp_pivot_list)]
+    # last row is not needed as it's blank. (Want to keep the total row)
+    del x_tmp_pivot_list[len(x_tmp_pivot_list)-1:len(x_tmp_pivot_list)]
 
     # x_tmp_pivot_list[0] is not needed. This is the sum-sum row
     # x_tmp_pivot_list[1] Is the header for the table
