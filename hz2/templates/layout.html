@@ -22,43 +22,16 @@
     <nav class="navbar navbar-expand-lg bg-light">
         <div class="container-fluid">
             <a class="navbar-brand" href="/">HZ2 Resource Database</a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
-                data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false"
-                aria-label="Toggle navigation">
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavAltMarkup"
+                aria-controls="navbarNavAltMarkup" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
-            <div class="collapse navbar-collapse" id="navbarSupportedContent">
-                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="" role="button" data-bs-toggle="dropdown"
-                            aria-expanded="false">
-                            Weapons
-                        </a>
-                        <ul class="dropdown-menu">
-                            <li><a class="dropdown-item" href="/allweapons">All</a></li>
-                            <li><a class="dropdown-item" href="#">Common</a></li>
-                            <li><a class="dropdown-item" href="#">Uncommon</a></li>
-                            <li><a class="dropdown-item" href="#">Rare</a></li>
-                            <li><a class="dropdown-item" href="#">Very Rare</a></li>
-                            <li><a class="dropdown-item" href="#">Legendary</a></li>
-                        </ul>
-                    </li>
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="" role="button" data-bs-toggle="dropdown"
-                            aria-expanded="false">
-                            Resources
-                        </a>
-                        <ul class="dropdown-menu">
-                            <li><a class="dropdown-item" href="/allresources">All</a></li>
-                            <li><a class="dropdown-item" href="#">Key Upgrade Resource</a></li>
-                            <li><a class="dropdown-item" href="#">Gear Upgrade Resources</a></li>
-                        </ul>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link active" href="/about">About</a>
-                    </li>
-
-                </ul>
+            <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
+                <div class="navbar-nav">
+                    <a class="nav-link active" aria-current="page" href="/allweapons">Weapons</a>
+                    <a class="nav-link" href="/allresources">Resources</a>
+                    <a class="nav-link" href="/about">About</a>
+                </div>
             </div>
         </div>
     </nav>
@@ -70,5 +43,4 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"
         integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p"
         crossorigin="anonymous"></script>
-
 </body>
