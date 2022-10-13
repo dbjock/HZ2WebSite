@@ -7,8 +7,8 @@ from hz2 import app as application
 
 # Putting the logging stuff here
 logger = logging.getLogger("hz2Main")
-
-with open("log.conf", 'rt') as f:
+basedir = os.path.abspath(os.path.dirname(__file__))
+with open(os.path.join(basedir,'log.conf' ), 'rt') as f:
     config = yaml.safe_load(f.read())
 
 logging.config.dictConfig(config)
