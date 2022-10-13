@@ -8,17 +8,17 @@ from hz2 import app
 
 # Initilizing logging
 # Log Formatters
-smlFMT = logging.Formatter(
-    '%(asctime)s %(levelname)-8s %(message)s')
-extFMT = logging.Formatter(
-    '%(asctime)s %(levelname)-8s:%(name)s.%(funcName)s: %(message)s')
-# Log Handlers
-console = logging.StreamHandler(sys.stdout)
-console.setLevel(logging.INFO)
-console.setFormatter(extFMT)
+# smlFMT = logging.Formatter(
+#     '%(asctime)s %(levelname)-8s %(message)s')
+# extFMT = logging.Formatter(
+#     '%(asctime)s %(levelname)-8s:%(name)s.%(funcName)s: %(message)s')
+# # Log Handlers
+# console = logging.StreamHandler(sys.stdout)
+# console.setLevel(logging.INFO)
+# console.setFormatter(extFMT)
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
-log.addHandler(console)
+# log.setLevel(logging.DEBUG)
+# log.addHandler(console)
 
 @app.route("/")
 @app.route("/home")
@@ -46,6 +46,7 @@ def weapon_detail(weapon_id):
     if len(w_reqs) == 0:
         return render_template('weapon.html', title=f"Weapon - {weapon.title}", weapon=weapon, headings=None)
     log.debug(f"weapon requirement results= {w_reqs}")
+    log.info(f"Weapon needs {len(w_reqs)} resources")
 
     log.info(f"Building list for panda")
     x_tmp_list=[]
@@ -97,7 +98,7 @@ def weapon_detail(weapon_id):
             log.debug(f"{r_numb} : Header : {x}")
             headings = x
             headings[0] = 'Resource'
-            log.info(f"Table Header: {headings}")
+            log.debug(f"Table Header: {headings}")
         else: # this is data. Make it pretty
             log.debug(f"{r_numb} : MakePrtty : {x}")
             # Columns to transform start at 2
@@ -113,7 +114,7 @@ def weapon_detail(weapon_id):
 
             tbl_data.append(x)
         r_numb +=1
-    log.info(f"Table Data: {tbl_data}")
+    log.debug(f"Table Data: {tbl_data}")
     log.info("Render the weapon page")
     return render_template('weapon.html', title=f"Weapon - {weapon.title}", weapon=weapon, header_row=headings, data=tbl_data)
 
@@ -121,9 +122,9 @@ def weapon_detail(weapon_id):
 def resource_detail(id):
     # Get the resource
     resource = Resource.query.filter_by(id=id).first()
-    log.info(f"Resource id : {id} results: {resource}")
+    log.info(f"Got resource id : {id} results: {resource}")
     if resource == None:
-        log.debug(f"Load resource not found page")
+        log.info(f"Load resource not found page")
         return render_template('not_found.html',title='Resource not found', thing='resource')
 
     # Get weapons which require this resource
@@ -131,9 +132,8 @@ def resource_detail(id):
     if len(weapons) == 0:
         log.info(f"No weapons require this resource")
         return render_template('resource.html', title=f"Resource - {resource.title}", resource=resource, header_row=None)
-
-    log.debug(f"results of weapons needed it weapons= {weapons}")
-
+    log.info(f"Resource id : {id} is used by: {len(weapons)} weapons")
+    log.debug(f"Weapons requiring resource: {resource} weapons: {weapons}")
     log.info(f"Building list for panda")
     x_tmp_list=[]
     # Required to have 5 levels/columns with data
@@ -183,7 +183,7 @@ def resource_detail(id):
             log.debug(f"{r_numb} : Header : {x}")
             headings = x
             headings[0] = 'Weapon'
-            log.info(f"Table Header: {headings}")
+            log.debug(f"Table Header: {headings}")
         else: # this is data. Make it pretty
             log.debug(f"{r_numb} : MakePrtty : {x}")
             # Columns to transform start at 2
@@ -199,7 +199,8 @@ def resource_detail(id):
 
             tbl_data.append(x)
         r_numb +=1
-    log.info(f"Table Data: {tbl_data}")
+    log.debug(f"Table Data: {tbl_data}")
+    log.info(f"Load resource page headers and data")
     return render_template('resource.html', title=f"Resource - {resource.title}", resource=resource, header_row=headings, data=tbl_data)
 
 @app.route("/allweapons")
@@ -215,7 +216,8 @@ def weapons_all():
 
     header = ("Weapon", "Type", "Rarity")
     data = results
-    log.info(f"Table Data: {data}")
+    log.debug(f"Table Data: {data}")
+    log.info(f"Loading weapons page with data")
     return render_template('weapons.html', title=f"ALL Weapons", header_row=header, data=data)
 
 @app.route("/allresources")
@@ -231,7 +233,8 @@ def resources_all():
 
     header = ("Resource", "Type", "Rarity")
     data = results
-    log.info(f"Table Data: {data}")
+    log.debug(f"Table Data: {data}")
+    log.info(f"Loading resources page with all resources data")
     return render_template('resources.html', title=f"ALL Resources", header_row=header, data=data)
 
 
