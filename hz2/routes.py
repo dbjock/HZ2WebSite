@@ -98,6 +98,7 @@ def weapon_detail(weapon_id):
             log.debug(f"{r_numb} : Header : {x}")
             headings = x
             headings[0] = 'Resource'
+            headings[2] = 'Acquire'
             log.debug(f"Table Header: {headings}")
         else: # this is data. Make it pretty
             log.debug(f"{r_numb} : MakePrtty : {x}")
@@ -183,6 +184,7 @@ def resource_detail(id):
             log.debug(f"{r_numb} : Header : {x}")
             headings = x
             headings[0] = 'Weapon'
+            headings[2] = 'Acquire'
             log.debug(f"Table Header: {headings}")
         else: # this is data. Make it pretty
             log.debug(f"{r_numb} : MakePrtty : {x}")
