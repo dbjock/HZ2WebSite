@@ -27,7 +27,7 @@ class Weapon(db.Model):
     requirements = db.relationship('Weapon_requirement', backref='weapon',lazy=True)
 
     def __repr__(self):
-        return f"Weapon({self.id},'{self.title},'{self.type.title}','{self.rarity.title}')"
+        return f"Weapon({self.id},'{self.title}','{self.type.title}','{self.rarity.title}')"
 
 class Resource_type(db.Model):
     id = db.Column(db.Integer, primary_key=True)
