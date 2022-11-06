@@ -1,4 +1,4 @@
-from flask import render_template, url_for
+from flask import render_template, url_for, make_response
 import pandas as pd
 import csv
 import logging
@@ -234,7 +234,8 @@ def weapon_detail(weapon_id):
 
     if  w_details['weapon'] == None:
         log.info(f"weapon_id:{weapon_id} - Weapon was not found. Loading weapon not found page")
-        return render_template('not_found.html',title='Weapon not found', thing=w_details['weapon'])
+        response = make_response(render_template('not_found.html',title='Weapon not found', thing="weapon"), 404)
+        return response
 
     if w_details['data'] == None:
         log.info(f"weapon_id:{weapon_id} no resources required to upgrade")
@@ -250,7 +251,8 @@ def resource_detail(id):
 
     if r_details['resource'] == None:
         log.info(f"resource_id:{id} - Resource was not found. Loading resource not found page")
-        return render_template('not_found.html',title='Resource not found', thing=r_details['resource'])
+        response = make_response(render_template('not_found.html',title='Resource not found', thing="Resource"), 404)
+        return response
 
     if r_details['data'] == None:
         log.info(f"No weapons require this resource")
