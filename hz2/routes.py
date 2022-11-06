@@ -7,6 +7,7 @@ from hz2.models import *
 from hz2 import app
 
 log = logging.getLogger(__name__)
+
 def get_weapon_detail(id):
     """Get and return weapon detail information
 
@@ -111,52 +112,37 @@ def get_weapon_detail(id):
     log.info(f"weapon_id:{id} data. Returning {tmp_dict}")
     return tmp_dict
 
-@app.route("/")
-@app.route("/home")
-def home_page():
-    return render_template('home.html')
+def get_resource_detail_weapon(id):
+    """Get resource_detail and weapons that require resourse
 
-@app.route("/about")
-def about():
-    return render_template('about.html', title="About")
+    Args:
+        id (int): The weapon id of the weapon to get data for
 
-@app.route("/resources")
-def resources():
-    return render_template('resources.html', title="The Resources")
+    Returns:
+        dictionary :
+        key resource (list of resource data)
+        key header_row (list of the column headers)
+        key data (list of the data)
+    """
+    tmp_dict = {}
+    tmp_dict['resource'] = None
+    tmp_dict['header_row'] = None
+    tmp_dict['data'] = None
 
-@app.route("/weapon/<weapon_id>")
-def weapon_detail(weapon_id):
-    log.info(f"Fetching weapon detail for weapon_id:{weapon_id}")
-    w_details = get_weapon_detail(weapon_id)
-    log.info(f"Results of fetching weapon detail for weapon_id:{weapon_id} results:{w_details}")
-
-    if  w_details['weapon'] == None:
-        log.info(f"weapon_id:{weapon_id} - Weapon was not found. Loading weapon not found page")
-        return render_template('not_found.html',title='Weapon not found', thing=w_details['weapon'])
-
-    if w_details['data'] == None:
-        log.info(f"weapon_id:{weapon_id} no resources required to upgrade")
-        return render_template('weapon.html', title=f"Weapon - {w_details['weapon'].title}", weapon=w_details['weapon'], headings=None)
-
-    return render_template('weapon.html', title=f"Weapon - {w_details['weapon'].title}", weapon=w_details['weapon'], header_row=w_details['header_row'], data=w_details['data'])
-
-@app.route("/resource/<id>")
-def resource_detail(id):
     # Get the resource
-    resource = Resource.query.filter_by(id=id).first()
-    log.info(f"Got resource id : {id} results: {resource}")
-    if resource == None:
-        log.info(f"Load resource not found page")
-        return render_template('not_found.html',title='Resource not found', thing='resource')
+    tmp_dict['resource'] = Resource.query.filter_by(id=id).first()
+    log.info(f"resource_id: {id} results: {tmp_dict['resource']}")
+    if tmp_dict['resource'] == None:
+        log.debug(f'resource_id:{id} not found. Returning {tmp_dict}')
 
     # Get weapons which require this resource
     weapons = Weapon_requirement.query.filter_by(resource_id=id).all()
     if len(weapons) == 0:
-        log.info(f"No weapons require this resource")
-        return render_template('resource.html', title=f"Resource - {resource.title}", resource=resource, header_row=None)
-    log.info(f"Resource id : {id} is used by: {len(weapons)} weapons")
-    log.debug(f"Weapons requiring resource: {resource} weapons: {weapons}")
-    log.info(f"Building list for panda")
+        log.info(f"resource_id:{id} has no weapons require it")
+        return tmp_dict
+
+    log.info(f"resource_id:{id} is used by: {len(weapons)} weapons")
+    log.info(f"Building resource_id:{id} list for panda")
     x_tmp_list=[]
     # Required to have 5 levels/columns with data
     for x in range(0,6):
@@ -166,29 +152,29 @@ def resource_detail(id):
     for req in weapons:
         x_tmp_list.append([req.weapon_id,f"{req.weapon.title} ({req.weapon.type.title})",req.level,req.amt_required])
 
-    log.debug(f"x_tmp_list:\n {x_tmp_list}")
-    # Creating panda dataframe from weapon requirements
-    log.info("Loading list into panda dataframe")
+    log.debug(f"resource_id:{id} x_tmp_list:\n {x_tmp_list}")
+    # Creating panda dataframe
+    log.info(f"Loading resource_id:{id} list into panda dataframe")
     x_tmp_df = pd.DataFrame(x_tmp_list, columns= ['weapon_id','weapon','level','amt_req'])
-    log.debug(f"dataframe: {x_tmp_df}")
+    log.debug(f"resource_id:{id} dataframe: {x_tmp_df}")
 
     # Pivot for totals colum and row
-    log.info('Creating pivot table from dataframe')
+    log.info(f'Creating resource_id:{id} pivot table from dataframe')
     x_tmp_pivotTable = x_tmp_df.pivot_table(index=['weapon','weapon_id'],columns='level',values='amt_req', aggfunc=['sum'], margins=True, margins_name='Total').fillna(0).astype(int)
-    log.debug(f"pivottable: {x_tmp_pivotTable}")
+    log.debug(f"resource_id:{id} pivottable: {x_tmp_pivotTable}")
 
     # Transform pivot table with totals to a list - Step 1: Convert to csv string
-    log.info('Transform pivot data: Step 1 - pivot table -> csv string')
+    log.info('Transform resource_id:{id} pivot data: Step 1 - pivot table -> csv string')
     x_tmp_pivot_string = x_tmp_pivotTable.to_csv(quoting=csv.QUOTE_NONNUMERIC,float_format=None)
-    log.debug(f"pivottable -> string: {x_tmp_pivot_string}")
+    log.debug(f"resource_id:{id} pivottable -> string: {x_tmp_pivot_string}")
 
     # Transform pivot table with totals to a list - Step 2: Convert csv string to list
-    log.info('Transform pivot data: Step 2 - csv string -> list')
+    log.info(f'Transform resource_id:{id} pivot data: Step 2 - csv string -> list')
     x_tmp_pivot_list = list(csv.reader(x_tmp_pivot_string.split('\n')))
-    log.debug(f"string -> list: {x_tmp_pivot_list}")
+    log.debug(f"resource_id:{id} string -> list: {x_tmp_pivot_list}")
 
     # Transform pivot table with totals to a list - Step 3: Remove unnessary rows from
-    log.info('Transform pivot data: Step 3 - Create table header. Transform table data')
+    log.info(f'Transform resource_id:{id} pivot data: Step 3 - Create table header. Transform table data')
     # last row is not needed as it's blank. (Want to keep the total row)
     del x_tmp_pivot_list[len(x_tmp_pivot_list)-1:len(x_tmp_pivot_list)]
 
@@ -222,9 +208,55 @@ def resource_detail(id):
 
             tbl_data.append(x)
         r_numb +=1
-    log.debug(f"Table Data: {tbl_data}")
-    log.info(f"Load resource page headers and data")
-    return render_template('resource.html', title=f"Resource - {resource.title}", resource=resource, header_row=headings, data=tbl_data)
+    tmp_dict['header_row'] = headings
+    tmp_dict['data'] = tbl_data
+    log.info(f'resource_id:{id} data. Return {tmp_dict}')
+    return tmp_dict
+
+@app.route("/")
+@app.route("/home")
+def home_page():
+    return render_template('home.html')
+
+@app.route("/about")
+def about():
+    return render_template('about.html', title="About")
+
+@app.route("/resources")
+def resources():
+    return render_template('resources.html', title="The Resources")
+
+@app.route("/weapon/<weapon_id>")
+def weapon_detail(weapon_id):
+    log.info(f"Fetching weapon detail for weapon_id:{weapon_id}")
+    w_details = get_weapon_detail(weapon_id)
+    log.info(f"Results of fetching weapon detail for weapon_id:{weapon_id} results:{w_details}")
+
+    if  w_details['weapon'] == None:
+        log.info(f"weapon_id:{weapon_id} - Weapon was not found. Loading weapon not found page")
+        return render_template('not_found.html',title='Weapon not found', thing=w_details['weapon'])
+
+    if w_details['data'] == None:
+        log.info(f"weapon_id:{weapon_id} no resources required to upgrade")
+        return render_template('weapon.html', title=f"Weapon - {w_details['weapon'].title}", weapon=w_details['weapon'], headings=None)
+
+    return render_template('weapon.html', title=f"Weapon - {w_details['weapon'].title}", weapon=w_details['weapon'], header_row=w_details['header_row'], data=w_details['data'])
+
+@app.route("/resource/<id>")
+def resource_detail(id):
+    log.info(f"Fetching resource detail for resource_id:{id}")
+    r_details = get_resource_detail_weapon(id)
+    log.info(f"Results of fetching resource_id:{id} results: {r_details}")
+
+    if r_details['resource'] == None:
+        log.info(f"resource_id:{id} - Resource was not found. Loading resource not found page")
+        return render_template('not_found.html',title='Resource not found', thing=r_details['resource'])
+
+    if r_details['data'] == None:
+        log.info(f"No weapons require this resource")
+        return render_template('resource.html', title=f"Resource - {r_details['resource'].title}", resource=r_details['resource'], header_row=None)
+
+    return render_template('resource.html', title=f"Resource - {r_details['resource'].title}", resource=r_details['resource'], header_row=r_details['header_row'], data=r_details['data'])
 
 @app.route("/allweapons")
 def weapons_all():
