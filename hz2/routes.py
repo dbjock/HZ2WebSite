@@ -6,19 +6,7 @@ import sys
 from hz2.models import *
 from hz2 import app
 
-# Initilizing logging
-# Log Formatters
-# smlFMT = logging.Formatter(
-#     '%(asctime)s %(levelname)-8s %(message)s')
-# extFMT = logging.Formatter(
-#     '%(asctime)s %(levelname)-8s:%(name)s.%(funcName)s: %(message)s')
-# # Log Handlers
-# console = logging.StreamHandler(sys.stdout)
-# console.setLevel(logging.INFO)
-# console.setFormatter(extFMT)
 log = logging.getLogger(__name__)
-# log.setLevel(logging.DEBUG)
-# log.addHandler(console)
 
 @app.route("/")
 @app.route("/home")
@@ -238,5 +226,3 @@ def resources_all():
     log.debug(f"Table Data: {data}")
     log.info(f"Loading resources page with all resources data")
     return render_template('resources.html', title=f"ALL Resources", header_row=header, data=data)
-
-
