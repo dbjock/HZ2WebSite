@@ -193,6 +193,7 @@ def get_resource_detail_weapon(id):
             log.debug(f"{r_numb} : Header : {x}")
             headings = x
             headings[0] = 'Weapon'
+            headings[1] = 'Weapon_id'
             headings[2] = 'Acquire'
             log.debug(f"Table Header: {headings}")
         else: # this is data. Make it pretty
@@ -296,21 +297,21 @@ def resources_all():
     log.info(f"Loading resources page with all resources data")
     return render_template('resources.html', title=f"ALL Resources", header_row=header, data=data)
 
-@app.route("/download/weapon/<weapon_id>")
-def dwnload_weapon_detail(weapon_id):
-    log.info(f"Request to download weapon_id:{weapon_id}")
-    w_details = get_weapon_detail(weapon_id)
+@app.route("/download/weapon/<id>")
+def dwnload_weapon_detail(id):
+    log.info(f"Request to download weapon_id:{id}")
+    w_details = get_weapon_detail(id)
 
-    if  w_details['weapon'] == None:
-        log.info(f"weapon_id:{weapon_id} - Weapon was not found. Loading weapon not found page")
+    if w_details['weapon'] == None:
+        log.info(f"weapon_id:{id} - Weapon was not found. Loading weapon not found page")
         response = make_response(render_template('not_found.html',title='Weapon not found', thing="weapon"), 404)
         return response
 
     if w_details['data'] == None:
-        log.info(f"weapon_id:{weapon_id} no resources required to upgrade")
+        log.info(f"weapon_id:{id} no resources required to upgrade")
         return render_template('weapon.html', title=f"Weapon - {w_details['weapon'].title}", weapon=w_details['weapon'], headings=None)
 
-    log.info(f"Setup the download")
+    log.info(f"Setup the download of weapon detail")
     data_proxy = io.StringIO()
     csvwriter = csv.writer(data_proxy,dialect='excel')
     # Write the header row
@@ -323,11 +324,45 @@ def dwnload_weapon_detail(weapon_id):
     data_extract.seek(0)
     data_proxy.close()
 
+    return send_file(
+        data_extract,
+        mimetype='text/csv',
+        as_attachment=True,
+        download_name=f'weapon_extract_{id}.csv'
+    )
+
+@app.route("/download/resource/<id>")
+def dwnload_resource_detail(id):
+    log.info(f"Request to download resource_id:{id}")
+    r_details = get_resource_detail_weapon(id)
+
+    if r_details['resource'] == None:
+        log.info(f"resource_id:{id} - Resource was not found. Loading resource not found page")
+        response = make_response(render_template('not_found.html',title='Resource not found', thing="Resource"), 404)
+        return response
+
+    if r_details['data'] == None:
+        log.info(f"No weapons require this resource")
+        return render_template('resource.html', title=f"Resource - {r_details['resource'].title}", resource=r_details['resource'], header_row=None)
+
+    log.info(f"Setup the download of resource detail for weapons")
+    data_proxy = io.StringIO()
+    csvwriter = csv.writer(data_proxy,dialect='excel')
+    # Write the header row
+    csvwriter.writerow(r_details['header_row'])
+    # Write data rows
+    csvwriter.writerows(r_details['data'])
+
+    data_extract = io.BytesIO()
+    data_extract.write(data_proxy.getvalue().encode('utf-8'))
+    data_extract.seek(0)
+    data_proxy.close()
 
     return send_file(
         data_extract,
         mimetype='text/csv',
         as_attachment=True,
-        download_name=f'weapon_extract_{weapon_id}.csv'
+        download_name=f'resource_extract_{id}.csv'
     )
+
 
