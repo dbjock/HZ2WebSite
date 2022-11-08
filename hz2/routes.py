@@ -1,8 +1,9 @@
-from flask import render_template, url_for, make_response
+from flask import render_template, url_for, make_response, send_file
 import pandas as pd
 import csv
 import logging
 import sys
+import io
 from hz2.models import *
 from hz2 import app
 
@@ -89,6 +90,7 @@ def get_weapon_detail(id):
             log.debug(f"{r_numb} : Header : {x}")
             headings = x
             headings[0] = 'Resource'
+            headings[1] = 'Resource_id'
             headings[2] = 'Acquire'
             log.debug(f"Table Header: {headings}")
         else: # this is data. Make it pretty
@@ -293,3 +295,39 @@ def resources_all():
     log.debug(f"Table Data: {data}")
     log.info(f"Loading resources page with all resources data")
     return render_template('resources.html', title=f"ALL Resources", header_row=header, data=data)
+
+@app.route("/download/weapon/<weapon_id>")
+def dwnload_weapon_detail(weapon_id):
+    log.info(f"Request to download weapon_id:{weapon_id}")
+    w_details = get_weapon_detail(weapon_id)
+
+    if  w_details['weapon'] == None:
+        log.info(f"weapon_id:{weapon_id} - Weapon was not found. Loading weapon not found page")
+        response = make_response(render_template('not_found.html',title='Weapon not found', thing="weapon"), 404)
+        return response
+
+    if w_details['data'] == None:
+        log.info(f"weapon_id:{weapon_id} no resources required to upgrade")
+        return render_template('weapon.html', title=f"Weapon - {w_details['weapon'].title}", weapon=w_details['weapon'], headings=None)
+
+    log.info(f"Setup the download")
+    data_proxy = io.StringIO()
+    csvwriter = csv.writer(data_proxy,dialect='excel')
+    # Write the header row
+    csvwriter.writerow(w_details['header_row'])
+    # Write data rows
+    csvwriter.writerows(w_details['data'])
+
+    data_extract = io.BytesIO()
+    data_extract.write(data_proxy.getvalue().encode('utf-8'))
+    data_extract.seek(0)
+    data_proxy.close()
+
+
+    return send_file(
+        data_extract,
+        mimetype='text/csv',
+        as_attachment=True,
+        download_name=f'weapon_extract_{weapon_id}.csv'
+    )
+
