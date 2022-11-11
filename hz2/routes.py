@@ -1,9 +1,8 @@
 from flask import render_template, url_for, make_response, send_file
 import pandas as pd
-import csv
-import logging
 import sys
-import io
+import csv, io, json
+import logging
 from hz2.models import *
 from hz2 import app
 
@@ -19,7 +18,7 @@ def get_weapon_detail(id):
         dictionary :
         key weapon (list of weapon data)
         key header_row (list of the column headers)
-        key data (list of the data)
+        key data (list of resources to upgrade weapon)
     """
     tmp_dict = {}
     tmp_dict['weapon'] = None
@@ -37,6 +36,7 @@ def get_weapon_detail(id):
     w_reqs = Weapon_requirement.query.filter_by(weapon_id=tmp_dict['weapon'].id).all()
     if len(w_reqs) == 0:
         log.info(f"weapon_id:{id} has no resource requirements. Returning {tmp_dict}")
+
         return tmp_dict
 
     log.info(f"weapon_id:{id} requires {len(w_reqs)} resources")
@@ -330,6 +330,48 @@ def dwnload_weapon_detail(id):
         as_attachment=True,
         download_name=f'weapon_extract_{id}.csv'
     )
+
+@app.route("/json/weapon/<id>")
+def json_weapon_detail(id):
+    """Display weapon detail data in json format
+
+    Args:
+        id (int): The weapon_id
+    """
+    log.info(f"Request for json data for weapon_id:{id}")
+    w_details = get_weapon_detail(id)
+
+    if w_details['weapon'] == None:
+        log.info(f"weapon_id:{id} - Weapon was not found. Loading weapon not found page")
+        response = make_response(render_template('not_found.html',title='Weapon not found', thing="weapon"), 404)
+        return response
+
+    if w_details['data'] == None:
+        log.info(f"weapon_id:{id} no resources required to upgrade")
+        return render_template('weapon.html', title=f"Weapon - {w_details['weapon'].title}", weapon=w_details['weapon'], headings=None)
+
+    # dictionary to hold data for json conversion
+    w_dict = {}
+    w_dict['weapon_id'] = w_details['weapon'].id
+    w_dict['weapon_title'] = w_details['weapon'].title
+    w_dict['type'] = w_details['weapon'].type.title
+    w_dict['rarity'] = w_details['weapon'].rarity.title
+
+   # Update w_dict['resources'] for json conversion
+    w_dict['resources'] = []
+    for row in w_details['data']:
+        x=0
+        xtmp={}
+        for key in w_details['header_row']:
+            xtmp[key] = row[x]
+            x += 1
+        w_dict['resources'].append(xtmp)
+
+    json_string = json.dumps(w_dict)
+    log.info(f"w_dict for json is : {w_dict}")
+    log.info(f"Weapon json: {json_string}")
+    return render_template('json.html', json_data = json_string)
+
 
 @app.route("/download/resource/<id>")
 def dwnload_resource_detail(id):
