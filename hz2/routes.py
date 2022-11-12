@@ -346,8 +346,8 @@ def json_weapon_detail(id):
         w_dict['resources'].append(xtmp)
 
     json_string = json.dumps(w_dict)
-    log.info(f"w_dict for json: {w_dict}")
-    log.info(f"Weapon json: {json_string}")
+    log.info(f"weapon_id:{id} w_dict for json: {w_dict}")
+    log.info(f"weapon_id:{id} json: {json_string}")
     data_extract = io.BytesIO()
     data_extract.write(json_string.encode('utf-8'))
     data_extract.seek(0)  # seek stream on begin to retrieve all data from it
@@ -358,43 +358,9 @@ def json_weapon_detail(id):
         download_name=f'weapon_extract_{id}.json'
     )
 
-@app.route("/download/resource/<id>")
-def dwnload_resource_detail(id):
-    log.info(f"Request to download resource_id:{id}")
-    r_details = get_resource_detail_weapon(id)
-
-    if r_details['resource'] == None:
-        log.info(f"resource_id:{id} - Resource was not found. Loading resource not found page")
-        response = make_response(render_template('not_found.html',title='Resource not found', thing="Resource"), 404)
-        return response
-
-    if r_details['data'] == None:
-        log.info(f"No weapons require this resource")
-        return render_template('resource.html', title=f"Resource - {r_details['resource'].title}", resource=r_details['resource'], header_row=None)
-
-    log.info(f"Setup the download of resource detail for weapons")
-    data_proxy = io.StringIO()
-    csvwriter = csv.writer(data_proxy,dialect='excel')
-    # Write the header row
-    csvwriter.writerow(r_details['header_row'])
-    # Write data rows
-    csvwriter.writerows(r_details['data'])
-
-    data_extract = io.BytesIO()
-    data_extract.write(data_proxy.getvalue().encode('utf-8'))
-    data_extract.seek(0)
-    data_proxy.close()
-
-    return send_file(
-        data_extract,
-        mimetype='text/csv',
-        as_attachment=True,
-        download_name=f'resource_extract_{id}.csv'
-    )
-
 @app.route("/download/resource/xlsx/<id>")
 def xlsx_resource_detail(id):
-    log.info(f"Request for xlsx for resource_id:{id}")
+    log.info(f"Request xlsx file for resource_id:{id}")
     r_details = get_resource_detail_weapon(id)
 
     if r_details['resource'] == None:
@@ -483,6 +449,68 @@ def xlsx_resource_detail(id):
         as_attachment=True,
         download_name=download_name
     )
+
+@app.route("/download/resource/json/<id>")
+def json_resource_detail(id):
+    """Download json file of resource details
+
+    Args:
+        id : Resource_id of resource to get
+    """
+    log.info(f"Request json file for resource_id:{id}")
+    r_details = get_resource_detail_weapon(id)
+
+    if r_details['resource'] == None:
+        log.info(f"resource_id:{id} - Resource was not found. Loading resource not found page")
+        response = make_response(render_template('not_found.html',title='Resource not found', thing="resource"), 404)
+        return response
+
+    if r_details['header_row'] == None:
+        ttl_weapons = 0
+    else:
+        ttl_weapons = len(r_details['data']) - 1
+
+    # dictionary to hold data for json conversion
+    w_dict = {}
+    w_dict['resource_id'] = r_details['resource'].id
+    w_dict['resource_name'] = r_details['resource'].title
+    w_dict['type'] = r_details['resource'].type.title
+    w_dict['rarity'] = r_details['resource'].rarity.title
+
+    # tranforming the weapon details
+    w_dict['weapons'] = []
+    for row in r_details['data']:
+        x=0
+        xtmp={}
+        first_i = True # We are at the first item in the row
+        for key in r_details['header_row']:
+            if first_i:
+                row_value = row[x]
+                first_i = False
+            else:
+                # Expecting number else it's null
+                xrow_value= row[x].replace(',','')
+                if xrow_value.isnumeric():
+                    row_value=int(xrow_value)
+                else:
+                    row_value= None
+            xtmp[key] = row_value
+            x += 1
+        w_dict['weapons'].append(xtmp)
+
+    json_string = json.dumps(w_dict)
+    log.info(f"resource_id:{id} w_dict for json: {w_dict}")
+    log.info(f"resource_id:{id} json: {json_string}")
+    data_extract = io.BytesIO()
+    data_extract.write(json_string.encode('utf-8'))
+    data_extract.seek(0)  # seek stream on begin to retrieve all data from it
+    return send_file(
+        data_extract,
+        mimetype='application/json',
+        as_attachment=True,
+        download_name=f'resource_extract_{id}.json'
+    )
+
 
 @app.route("/download/weapon/xlsx/<id>")
 def xlsx_weapon_detail(id):
