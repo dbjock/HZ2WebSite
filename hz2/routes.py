@@ -139,6 +139,7 @@ def get_resource_detail_weapon(id):
 
     # Get weapons which require this resource
     weapons = Weapon_requirement.query.filter_by(resource_id=id).all()
+    log.debug(f'resource_id:{id} weapon query results:{weapons}')
     if len(weapons) == 0:
         log.info(f"resource_id:{id} has no weapons require it")
         return tmp_dict
@@ -389,6 +390,98 @@ def dwnload_resource_detail(id):
         mimetype='text/csv',
         as_attachment=True,
         download_name=f'resource_extract_{id}.csv'
+    )
+
+@app.route("/download/resource/xlsx/<id>")
+def xlsx_resource_detail(id):
+    log.info(f"Request for xlsx for resource_id:{id}")
+    r_details = get_resource_detail_weapon(id)
+
+    if r_details['resource'] == None:
+        log.info(f"resource_id:{id} - Resource was not found. Loading resource not found page")
+        response = make_response(render_template('not_found.html',title='Resource not found', thing="resource"), 404)
+        return response
+
+    if r_details['header_row'] == None:
+        ttl_weapons = 0
+    else:
+        ttl_weapons = len(r_details['data']) - 1
+
+    data_extract = io.BytesIO()
+    book = xlsxwriter.Workbook(data_extract)
+    resource_sheet = book.add_worksheet("Resource")
+    resource_sheet.set_column('A:A',15)
+
+    # Settng the column B's width on resource sheet
+    col_width = len('Resource Name') + 5
+    if len(r_details['resource'].title) > col_width:
+        col_width = len(r_details['resource'].title)
+    resource_sheet.set_column('B:B',col_width)
+
+    resource_sheet.set_column('C:C',len(r_details['resource'].type.title))
+
+    # Settng the column D's width
+    col_width = len('Rarity') + 5
+    if len(r_details['resource'].rarity.title) > col_width:
+        col_width = len(r_details['resource'].rarity.title)
+    resource_sheet.set_column('D:D',col_width)
+    resource_sheet.set_column('E:E',len("Total Weapons") + 2)
+
+    resource_sheet.write_row("A1",["Resource ID",
+        "Resource Name",
+        "Type",
+        "Rarity",
+        "Total Weapons"],
+        book.add_format({'bold': True}))
+
+    resource_sheet.write_row("A2",[r_details['resource'].id,
+        r_details['resource'].title,
+        r_details['resource'].type.title,
+        r_details['resource'].rarity.title,
+        ttl_weapons])
+
+    weapons_sheet = book.add_worksheet("Weapons")
+    if ttl_weapons == 0:
+        weapons_sheet.write("A1","No weapons require the resource",book.add_format({'bold': True}))
+    else:
+        weapons_sheet.write_row("A1",r_details['header_row'],book.add_format({'bold': True}))
+        sheet_row = 1
+        sheet_col = 0
+        # Set default max width for Resource Column
+        weapon_width = 15
+        # write the weapons to which use this resource
+        for row in r_details['data']:
+            log.debug(f'resource_id:{id} sheet_row:{sheet_row}, sheet_col:{sheet_col}, {row}')
+            first_i = True
+            for i in row:
+                if first_i: # this will be text
+                    if len(i) > weapon_width:
+                        weapon_width = len(i) + 3
+                    weapons_sheet.write(sheet_row,sheet_col,i)
+                    first_i = False
+                else: # Assuming the rest will be numbers. Have to remove comma
+                    tmp = i.replace(',','')
+                    if tmp.isnumeric():
+                        weapons_sheet.write(sheet_row,sheet_col,int(tmp))
+                    else:
+                        weapons_sheet.write(sheet_row,sheet_col,i)
+                sheet_col +=1
+            sheet_col = 0
+            sheet_row += 1
+
+        log.debug(f"resource_id:{id} Setting column A's width to: {weapon_width}")
+        weapons_sheet.set_column("A:A", weapon_width)
+        weapons_sheet.set_column("B:B",13) # Setting Resource ID column width
+
+    book.close()  # close book and save it in "output"
+    data_extract.seek(0)  # seek stream on begin to retrieve all data from it
+    download_name=f'resource_extract_{id}.xlsx'
+    log.info(f"resource_id:{id} - Response to download file: {download_name}")
+    return send_file(
+        data_extract,
+        mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        as_attachment=True,
+        download_name=download_name
     )
 
 @app.route("/download/weapon/xlsx/<id>")
