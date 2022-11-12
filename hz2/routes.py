@@ -1,7 +1,7 @@
 from flask import render_template, url_for, make_response, send_file
 import pandas as pd
 import sys
-import csv, io, json
+import csv, io, json, xlsxwriter
 import logging
 from hz2.models import *
 from hz2 import app
@@ -297,7 +297,7 @@ def resources_all():
     log.info(f"Loading resources page with all resources data")
     return render_template('resources.html', title=f"ALL Resources", header_row=header, data=data)
 
-@app.route("/weapon/json/<id>")
+@app.route("/download/weapon/json/<id>")
 def json_weapon_detail(id):
     """Display weapon detail data in json format
 
@@ -389,4 +389,95 @@ def dwnload_resource_detail(id):
         mimetype='text/csv',
         as_attachment=True,
         download_name=f'resource_extract_{id}.csv'
+    )
+
+@app.route("/download/weapon/xlsx/<id>")
+def xlsx_weapon_detail(id):
+    log.info(f"Request for xlsx for weapon_id:{id}")
+    w_details = get_weapon_detail(id)
+
+    if w_details['weapon'] == None:
+        log.info(f"weapon_id:{id} - Weapon was not found. Loading weapon not found page")
+        response = make_response(render_template('not_found.html',title='Weapon not found', thing="weapon"), 404)
+        return response
+
+    if w_details['header_row'] == None:
+        ttl_resources = 0
+    else:
+        ttl_resources = len(w_details['data'])
+
+    data_extract = io.BytesIO()
+    book = xlsxwriter.Workbook(data_extract)
+    weapon_sheet = book.add_worksheet("Weapon")
+    weapon_sheet.set_column('A:A',15)
+
+    # Settng the column B's width on weapons sheet
+    col_width = len('Weapon Name') + 5
+    if len(w_details['weapon'].title) > col_width:
+        col_width = len(w_details['weapon'].title)
+    weapon_sheet.set_column('B:B',col_width)
+
+    weapon_sheet.set_column('C:C',len(w_details['weapon'].type.title))
+
+    # Settng the column D's width
+    col_width = len('Rarity') + 5
+    if len(w_details['weapon'].rarity.title) > col_width:
+        col_width = len(w_details['weapon'].rarity.title)
+    weapon_sheet.set_column('D:D',col_width)
+    weapon_sheet.set_column('E:E',len("Total Resources") + 2)
+
+    weapon_sheet.write_row("A1",["Weapon ID",
+        "Weapon Name",
+        "Type",
+        "Rarity",
+        "Total Resources"],
+        book.add_format({'bold': True}))
+
+    weapon_sheet.write_row("A2",[w_details['weapon'].id,
+        w_details['weapon'].title,
+        w_details['weapon'].type.title,
+        w_details['weapon'].rarity.title,
+        ttl_resources])
+
+    resource_sheet = book.add_worksheet("Resources")
+    if ttl_resources == 0:
+        resource_sheet.write("A1","No resources required to upgrade weapon",book.add_format({'bold': True}))
+    else:
+        resource_sheet.write_row("A1",w_details['header_row'],book.add_format({'bold': True}))
+        sheet_row = 1
+        sheet_col = 0
+        # Set default max width for Resource Column
+        resource_width = 10
+        # write the resources to upgrade weapon
+        for row in w_details['data']:
+            log.debug(f'sheet_row:{sheet_row}, sheet_col:{sheet_col}, {row}')
+            first_i = True
+            for i in row:
+                if first_i: # this will be text
+                    if len(i) > resource_width:
+                        resource_width = len(i) + 3
+                    resource_sheet.write(sheet_row,sheet_col,i)
+                    first_i = False
+                else: # Assuming the rest will be numbers. Have to remove comma
+                    tmp = i.replace(',','')
+                    if tmp.isnumeric():
+                        resource_sheet.write(sheet_row,sheet_col,int(tmp))
+                    else:
+                        resource_sheet.write(sheet_row,sheet_col,i)
+                sheet_col +=1
+            sheet_col = 0
+            sheet_row += 1
+
+        log.debug(f"Setting column A's width to: {resource_width}")
+        resource_sheet.set_column("A:A", resource_width)
+        resource_sheet.set_column("B:B",13) # Setting Resource ID column width
+
+    book.close()  # close book and save it in "output"
+    data_extract.seek(0)  # seek stream on begin to retrieve all data from it
+
+    return send_file(
+        data_extract,
+        mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        as_attachment=True,
+        download_name=f'weapon_extract_{id}.xlsx'
     )
