@@ -297,41 +297,7 @@ def resources_all():
     log.info(f"Loading resources page with all resources data")
     return render_template('resources.html', title=f"ALL Resources", header_row=header, data=data)
 
-@app.route("/download/weapon/<id>")
-def dwnload_weapon_detail(id):
-    log.info(f"Request to download weapon_id:{id}")
-    w_details = get_weapon_detail(id)
-
-    if w_details['weapon'] == None:
-        log.info(f"weapon_id:{id} - Weapon was not found. Loading weapon not found page")
-        response = make_response(render_template('not_found.html',title='Weapon not found', thing="weapon"), 404)
-        return response
-
-    if w_details['data'] == None:
-        log.info(f"weapon_id:{id} no resources required to upgrade")
-        return render_template('weapon.html', title=f"Weapon - {w_details['weapon'].title}", weapon=w_details['weapon'], headings=None)
-
-    log.info(f"Setup the download of weapon detail")
-    data_proxy = io.StringIO()
-    csvwriter = csv.writer(data_proxy,dialect='excel')
-    # Write the header row
-    csvwriter.writerow(w_details['header_row'])
-    # Write data rows
-    csvwriter.writerows(w_details['data'])
-
-    data_extract = io.BytesIO()
-    data_extract.write(data_proxy.getvalue().encode('utf-8'))
-    data_extract.seek(0)
-    data_proxy.close()
-
-    return send_file(
-        data_extract,
-        mimetype='text/csv',
-        as_attachment=True,
-        download_name=f'weapon_extract_{id}.csv'
-    )
-
-@app.route("/json/weapon/<id>")
+@app.route("/weapon/json/<id>")
 def json_weapon_detail(id):
     """Display weapon detail data in json format
 
@@ -353,7 +319,7 @@ def json_weapon_detail(id):
     # dictionary to hold data for json conversion
     w_dict = {}
     w_dict['weapon_id'] = w_details['weapon'].id
-    w_dict['weapon_title'] = w_details['weapon'].title
+    w_dict['weapon_name'] = w_details['weapon'].title
     w_dict['type'] = w_details['weapon'].type.title
     w_dict['rarity'] = w_details['weapon'].rarity.title
 
@@ -362,16 +328,34 @@ def json_weapon_detail(id):
     for row in w_details['data']:
         x=0
         xtmp={}
+        first_i = True # We are at the first item in the row
         for key in w_details['header_row']:
-            xtmp[key] = row[x]
+            if first_i:
+                row_value = row[x]
+                first_i = False
+            else:
+                # Expecting number else it's null
+                xrow_value= row[x].replace(',','')
+                if xrow_value.isnumeric():
+                    row_value=int(xrow_value)
+                else:
+                    row_value= None
+            xtmp[key] = row_value
             x += 1
         w_dict['resources'].append(xtmp)
 
     json_string = json.dumps(w_dict)
-    log.info(f"w_dict for json is : {w_dict}")
+    log.info(f"w_dict for json: {w_dict}")
     log.info(f"Weapon json: {json_string}")
-    return render_template('json.html', json_data = json_string)
-
+    data_extract = io.BytesIO()
+    data_extract.write(json_string.encode('utf-8'))
+    data_extract.seek(0)  # seek stream on begin to retrieve all data from it
+    return send_file(
+        data_extract,
+        mimetype='application/json',
+        as_attachment=True,
+        download_name=f'weapon_extract_{id}.json'
+    )
 
 @app.route("/download/resource/<id>")
 def dwnload_resource_detail(id):
@@ -406,5 +390,3 @@ def dwnload_resource_detail(id):
         as_attachment=True,
         download_name=f'resource_extract_{id}.csv'
     )
-
-
