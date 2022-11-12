@@ -2,10 +2,16 @@
 {% block content %}
 <h1> {{ weapon.title }} ({{ weapon.type.title }}) : {{ weapon.rarity.title }}</h1>
 {% if header_row %}
-<p>Resources required to upgrade. Download
-    <a href="{{ url_for('xlsx_weapon_detail', id=weapon.id) }}" class="link-primary">Excel (XLSX)</a>
-    <a href="{{ url_for('json_weapon_detail', id=weapon.id) }}" class="link-primary">json</a>
+<a href="{{ url_for('xlsx_weapon_detail', id=weapon.id) }}">
+    <button type="button" class="btn btn-outline-primary">Download XLSX</button>
+</a>
+<a href="{{ url_for('json_weapon_detail', id=weapon.id) }}">
+    <button type="button" class="btn btn-outline-primary">Download JSON</button>
+</a>
+
+<p>Resources required to upgrade.
 </p>
+
 <table class="table  table-hover table-bordered" id='myTable'>
     <tr>
         <th>{{ header_row[0] }}</th>

@@ -1,11 +1,17 @@
 {% extends "layout.html" %}
 {% block content %}
-<h1> Resource: {{ resource.title }} : {{ resource.rarity.title }}</h1>
-<h1> {{ resource.type.title }}</h1>
+<h1>{{ resource.title }} : {{ resource.type.title }}</h1>
+<h2>{{ resource.rarity.title }}</h2>
 {% if header_row %}
-<p>Weapons which require this to upgrade
-    <a href="{{ url_for('dwnload_resource_detail', id=resource.id) }}" class="link-primary">Download</a>
-</p>
+<a href="{{ url_for('xlsx_resource_detail', id=resource.id) }}">
+    <button type="button" class="btn btn-outline-primary">Download XLSX</button>
+</a>
+<a href="{{ url_for('json_resource_detail', id=resource.id) }}">
+    <button type="button" class="btn btn-outline-primary">Download JSON</button>
+</a>
+
+<p>Weapons which require this resource</p>
+
 <table class="table table-hover table-bordered" id='myTable'>
     <tr>
         <th>{{ header_row[0] }}</th>
