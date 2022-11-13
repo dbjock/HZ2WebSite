@@ -97,7 +97,6 @@ def get_weapon_detail(id):
             log.debug(f"{r_numb} : MakePrtty : {x}")
             # Columns to transform start at 2
             for col in range(2,len(x)):
-                orgVal = x[col]
                 testVal = int(x[col])
                 if testVal > 0:
                     # thousand seperator
@@ -144,8 +143,7 @@ def get_resource_detail_weapon(id):
         log.info(f"resource_id:{id} has no weapons require it")
         return tmp_dict
 
-    log.info(f"resource_id:{id} is used by: {len(weapons)} weapons")
-    log.info(f"Building resource_id:{id} list for panda")
+    log.info(f"resource_id:{id} Building list for panda")
     x_tmp_list=[]
     # Required to have 5 levels/columns with data
     for x in range(0,6):
@@ -201,7 +199,6 @@ def get_resource_detail_weapon(id):
             log.debug(f"{r_numb} : MakePrtty : {x}")
             # Columns to transform start at 2
             for col in range(2,len(x)):
-                orgVal = x[col]
                 testVal = int(x[col])
                 if testVal > 0:
                     # thousand seperator
@@ -510,7 +507,6 @@ def json_resource_detail(id):
         as_attachment=True,
         download_name=f'resource_extract_{id}.json'
     )
-
 
 @app.route("/download/weapon/xlsx/<id>")
 def xlsx_weapon_detail(id):
